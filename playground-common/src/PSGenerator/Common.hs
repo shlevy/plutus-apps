@@ -160,7 +160,7 @@ exportTxBridge :: BridgePart
 exportTxBridge = do
     typeName ^== "ExportTx"
     typeModule ^== "Plutus.Contract.Wallet"
-    pure psString  -- FIXME: @bwbush, Should this be a composite?
+    pure psJson
 
 miscBridge :: BridgePart
 miscBridge =
