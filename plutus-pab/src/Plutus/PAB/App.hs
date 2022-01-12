@@ -64,6 +64,7 @@ import Database.SQLite.Simple qualified as Sqlite
 import Network.HTTP.Client (managerModifyRequest, newManager, setRequestIgnoreStatus)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Plutus.ChainIndex.Client qualified as ChainIndex
+import Plutus.Contract.Unsafe (setSlotConfig)
 import Plutus.PAB.Core (EffectHandlers (EffectHandlers), PABAction)
 import Plutus.PAB.Core qualified as Core
 import Plutus.PAB.Core.ContractInstance.BlockchainEnv qualified as BlockchainEnv
@@ -244,8 +245,9 @@ runApp
     storageBackend
     trace
     contractHandler
-    config@Config{pabWebserverConfig=WebserverConfig{endpointTimeout}} =
-    Core.runPAB (Timeout endpointTimeout) (appEffectHandlers storageBackend config trace contractHandler)
+    config@Config{pabWebserverConfig=WebserverConfig{endpointTimeout},nodeServerConfig=MockServerConfig{mscSlotConfig}} =
+      (setSlotConfig mscSlotConfig >>)
+        . Core.runPAB (Timeout endpointTimeout) (appEffectHandlers storageBackend config trace contractHandler)
 
 type App a b = PABAction (Builtin a) (AppEnv a) b
 
