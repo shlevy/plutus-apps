@@ -32,7 +32,7 @@ import System.Random.MWC (GenIO, createSystemRandom)
 import System.Signal (installHandler, sigINT)
 import Text.Pretty.Simple (pPrint)
 
-import Cardano.Node.Types (MockServerConfig (..))
+import Cardano.Node.Types (MockServerConfig (..), NodeMode (MockNode))
 import Cardano.Protocol.Socket.Mock.Client (TxSendHandle (..), queueTx, runTxSender)
 import Ledger.Ada qualified as Ada
 import Ledger.Blockchain (OnChainTx (..))
@@ -192,7 +192,8 @@ initializeInterruptHandler stats = do
 initializeClient :: Config -> IO TxSendHandle
 initializeClient cfg = do
     let serverSocket = mscSocketPath $ nodeServerConfig cfg
-    runTxSender serverSocket
+    let isMock = mscNodeMode (nodeServerConfig cfg) == MockNode
+    runTxSender isMock serverSocket
 
 main :: IO ()
 main = do

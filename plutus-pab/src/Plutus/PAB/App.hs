@@ -120,9 +120,12 @@ appEffectHandlers
   -> BuiltinHandler a
   -> EffectHandlers (Builtin a) (AppEnv a)
 appEffectHandlers storageBackend config trace BuiltinHandler{contractHandler} =
+  let
+    isMock = mscNodeMode (nodeServerConfig config) == MockNode
+  in
     EffectHandlers
         { initialiseEnvironment = do
-            env <- liftIO $ mkEnv trace config
+            env <- liftIO $ mkEnv isMock trace config
             let Config { nodeServerConfig = MockServerConfig{mscSocketPath, mscSlotConfig, mscNodeMode, mscNetworkId = NetworkIdWrapper networkId}
                        , developmentOptions = DevelopmentOptions{pabRollbackHistory, pabResumeFrom} } = config
             instancesState <- liftIO $ STM.atomically Instances.emptyInstancesState
@@ -171,7 +174,7 @@ appEffectHandlers storageBackend config trace BuiltinHandler{contractHandler} =
             . reinterpret (Core.handleMappedReader @(AppEnv a) @MockClient.TxSendHandle txSendHandle)
             . interpret (Core.handleUserEnvReader @(Builtin a) @(AppEnv a))
             . reinterpret (Core.handleMappedReader @(AppEnv a) @ClientEnv nodeClientEnv)
-            . reinterpretN @'[_, _, _, _] (handleNodeClientClient @IO $ mscSlotConfig $ nodeServerConfig config)
+            . reinterpretN @'[_, _, _, _] (handleNodeClientClient @IO isMock $ mscSlotConfig $ nodeServerConfig config)
 
             -- handle 'ChainIndexEffect'
             . flip handleError (throwError . ChainIndexError)
@@ -249,8 +252,8 @@ type App a b = PABAction (Builtin a) (AppEnv a) b
 data StorageBackend = BeamSqliteBackend | InMemoryBackend
   deriving (Eq, Ord, Show)
 
-mkEnv :: Trace IO (PABLogMsg (Builtin a)) -> Config -> IO (AppEnv a)
-mkEnv appTrace appConfig@Config { dbConfig
+mkEnv :: Bool -> Trace IO (PABLogMsg (Builtin a)) -> Config -> IO (AppEnv a)
+mkEnv isMock appTrace appConfig@Config { dbConfig
              , nodeServerConfig = MockServerConfig{mscBaseUrl, mscSocketPath, mscSlotConfig, mscProtocolParametersJsonPath}
              , walletServerConfig
              , chainIndexConfig
@@ -259,9 +262,9 @@ mkEnv appTrace appConfig@Config { dbConfig
     nodeClientEnv <- clientEnv mscBaseUrl
     chainIndexEnv <- clientEnv (ChainIndex.ciBaseUrl chainIndexConfig)
     dbConnection <- dbConnect appTrace dbConfig
-    txSendHandle <- liftIO $ MockClient.runTxSender mscSocketPath
+    txSendHandle <- liftIO $ MockClient.runTxSender isMock mscSocketPath
     -- This is for access to the slot number in the interpreter
-    chainSyncHandle <- Left <$> (liftIO $ MockClient.runChainSync' mscSocketPath mscSlotConfig)
+    chainSyncHandle <- Left <$> (liftIO $ MockClient.runChainSync' isMock mscSocketPath mscSlotConfig)
     appInMemContractStore <- liftIO initialInMemInstances
     protocolParameters <- maybe (pure def) readPP mscProtocolParametersJsonPath
     pure AppEnv {..}

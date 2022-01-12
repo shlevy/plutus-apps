@@ -18,6 +18,7 @@ import Data.Void (Void)
 
 import Control.Concurrent
 import Control.Concurrent.STM
+import Control.Monad (void, when)
 import Control.Monad.Catch (catchAll)
 import Control.Tracer
 
@@ -51,22 +52,29 @@ getCurrentSlot :: ChainSyncHandle Block -> IO Slot
 getCurrentSlot = cshCurrentSlot
 
 -- | Run the chain sync protocol to get access to the current slot number.
-runChainSync' :: FilePath
+runChainSync' :: Bool
+              -> FilePath
               -> SlotConfig
               -> IO (ChainSyncHandle Block)
-runChainSync' socketPath slotConfig =
-  runChainSync socketPath slotConfig (\_ _ -> pure ())
+runChainSync' isMock socketPath slotConfig =
+  runChainSync isMock socketPath slotConfig (\_ _ -> pure ())
 
-runChainSync :: FilePath
+runChainSync :: Bool
+             -> FilePath
              -> SlotConfig
              -> (Block -> Slot -> IO ())
              -> IO (ChainSyncHandle Block)
-runChainSync socketPath slotConfig onNewBlock = do
+runChainSync isMock socketPath slotConfig onNewBlock = do
     let handle = ChainSyncHandle { cshCurrentSlot = currentSlot slotConfig
                                  , cshHandler = onNewBlock
                                  }
 
-    _ <- forkIO $ withIOManager $ loop (1 :: Second) handle
+    -- FIXME: @bwbush, the process should not run on an Alonzo deployment, even though the app calls this function.
+    when isMock
+      . void
+      . forkIO
+      . withIOManager
+      $ loop (1 :: Second) handle
     pure handle
     where
       loop :: TimeUnit a => a -> ChainSyncHandle Block -> IOManager -> IO ()
@@ -131,13 +139,19 @@ chainSyncClient slotConfig onNewBlock =
         , ChainSync.recvMsgRollBackward = error "Not supported."
         }
 
-runTxSender :: FilePath
+runTxSender :: Bool
+            -> FilePath
             -> IO TxSendHandle
-runTxSender socketPath = do
+runTxSender isMock socketPath = do
     inputQueue  <- newTQueueIO
     let handle = TxSendHandle { tshQueue = inputQueue }
 
-    _ <- forkIO $ withIOManager $ loop (1 :: Second) handle
+    -- FIXME: @bwbush, the process should not run on an Alonzo deployment, even though the app calls this function.
+    when isMock
+      . void
+      . forkIO
+      . withIOManager
+      $ loop (1 :: Second) handle
     pure handle
     where
       loop :: TimeUnit a => a -> TxSendHandle -> IOManager -> IO ()

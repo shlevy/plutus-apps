@@ -188,7 +188,7 @@ runWalletEffects ::
 runWalletEffects trace txSendHandle chainSyncHandle chainIndexEnv wallets feeCfg slotCfg action =
     reinterpret (handleMultiWallet feeCfg) action
     & interpret (LM.handleLogMsgTrace trace)
-    & reinterpret2 (NodeClient.handleNodeClientClient slotCfg)
+    & reinterpret2 (NodeClient.handleNodeClientClient True slotCfg)
     & runReader chainSyncHandle
     & runReader txSendHandle
     & reinterpret ChainIndex.handleChainIndexClient

@@ -8,6 +8,7 @@
 
 module Cardano.Node.Client where
 
+import Control.Monad (unless)
 import Control.Monad.Freer
 import Control.Monad.Freer.Reader (Reader, ask)
 import Control.Monad.IO.Class
@@ -41,12 +42,16 @@ handleNodeClientClient ::
     , Member (Reader MockClient.TxSendHandle) effs
     , Member (Reader ChainSyncHandle) effs
     )
-    => SlotConfig
+    => Bool
+    -> SlotConfig
     -> NodeClientEffect
     ~> Eff effs
-handleNodeClientClient slotCfg e = do
+handleNodeClientClient isMock slotCfg e = do
     txSendHandle <- ask @MockClient.TxSendHandle
     chainSyncHandle <- ask @ChainSyncHandle
+    unless isMock
+      . liftIO
+      $ putStrLn "Cardano.Node.Client.handleNodeClient should only be called for a mock deployment?"
     case e of
         PublishTx tx  -> liftIO $ MockClient.queueTx txSendHandle tx
         GetClientSlot ->

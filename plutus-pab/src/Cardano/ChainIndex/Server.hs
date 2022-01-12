@@ -39,7 +39,7 @@ main trace ChainIndexConfig{ciBaseUrl} socketPath slotConfig = runLogEffects tra
     tVarState <- liftIO $ STM.atomically $ STM.newTVar mempty
 
     logInfo StartingNodeClientThread
-    _ <- liftIO $ runChainSync socketPath slotConfig $ updateChainState tVarState
+    _ <- liftIO $ runChainSync True socketPath slotConfig $ updateChainState tVarState
 
     logInfo $ StartingChainIndex servicePort
     liftIO $ serveChainIndexQueryServer servicePort tVarState

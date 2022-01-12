@@ -70,7 +70,7 @@ main trace MockServerConfig { mscBaseUrl
     serverHandler <- liftIO $ Server.runServerNode trace mscSocketPath mscKeptBlocks (_chainState appState) mscSlotConfig
     serverState   <- liftIO $ newMVar appState
     handleDelayEffect $ delayThread (2 :: Second)
-    clientHandler <- liftIO $ Client.runTxSender mscSocketPath
+    clientHandler <- liftIO $ Client.runTxSender True mscSocketPath
 
     let ctx = Ctx { serverHandler = serverHandler
                   , txSendHandle  = clientHandler

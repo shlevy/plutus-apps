@@ -58,7 +58,7 @@ startNodeClient socket mode rollbackHistory slotConfig networkId resumePoint ins
     env <- STM.atomically $ emptyBlockchainEnv rollbackHistory
     case mode of
       MockNode -> do
-        void $ MockClient.runChainSync socket slotConfig
+        void $ MockClient.runChainSync True socket slotConfig
             (\block slot -> handleSyncAction $ processMockBlock instancesState env block slot)
       AlonzoNode -> do
         let resumePoints = maybeToList $ toCardanoPoint resumePoint
@@ -73,15 +73,10 @@ handleSyncAction action = do
   result <- STM.atomically action
   case result of
     Left err -> putStrLn $ "handleSyncAction failed with: " <> show err
-    Right (Slot s, BlockNumber n) -> do
-      let recentSlot = 41511045 -- TODO: This is a relatively recent slot number
-                                -- we start logging from here to avoid spamming the terminal
-                                -- should be removed when we have better logging to report
-                                -- on the PAB sync status
-      if (n `mod` 100_000 == 0 && n > 0) || (s >= recentSlot)
-        then do
-          putStrLn $ "Current block: " <> show n <> ". Current slot: " <> show s
-        else pure ()
+    Right (Slot s, BlockNumber n) ->
+      -- FIXME: @bwbush, report more frequently, so we can see that PAB is syncing with the node.
+      when (n `mod` 1000 == 1 || s `mod` 1000 == 1)
+        . putStrLn $ "Current block: " <> show n <> ". Current slot: " <> show s
   either (error . show) (const $ pure ()) result
 
 updateInstances :: IndexedBlock -> InstanceClientEnv -> STM ()
