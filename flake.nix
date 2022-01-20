@@ -20,7 +20,7 @@
       flake = false;
     };
     haskell-nix = {
-      url = "github:input-output-hk/haskell.nix";
+      url = "github:shlevy/haskell.nix?ref=source-repo-override";
       flake = false;
     };
 
