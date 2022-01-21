@@ -137,6 +137,7 @@ library
         semigroupoids -any,
         servant -any,
         serialise -any,
+        stm -any,
         streaming -any,
         template-haskell -any,
         text -any,
@@ -158,6 +159,7 @@ library
     if !(impl(ghcjs) || os(ghcjs) || os(windows))
         exposed-modules:
             Plutus.Contract.Test
+            Plutus.Contract.Test.Certification
             Plutus.Contract.Test.Coverage
             Plutus.Contract.Test.ContractModel
             Plutus.Contract.Test.ContractModel.Internal

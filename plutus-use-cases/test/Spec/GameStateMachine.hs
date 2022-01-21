@@ -22,6 +22,7 @@ module Spec.GameStateMachine
   , prop_CheckNoLockedFundsProof
   , prop_SanityCheckModel
   , prop_GameCrashTolerance
+  , certification
   ) where
 
 import Control.Lens
@@ -41,6 +42,7 @@ import Ledger.Typed.Scripts qualified as Scripts
 import Ledger.Value (Value)
 import Plutus.Contract.Secrets
 import Plutus.Contract.Test hiding (not)
+import Plutus.Contract.Test.Certification
 import Plutus.Contract.Test.ContractModel
 import Plutus.Contract.Test.ContractModel.CrashTolerance
 import Plutus.Contracts.GameStateMachine as G
@@ -408,3 +410,18 @@ guessTokenVal :: Value
 guessTokenVal =
     let sym = Scripts.forwardingMintingPolicyHash $ G.typedValidator gameParam
     in G.token sym "guess"
+
+-- | Certification.
+certification :: Certification GameModel
+certification = Certification {
+    certNoLockedFunds = Just noLockProof,
+    certUnitTests     = Just unitTest,
+    certCoverageIndex = covIdx gameParam
+  }
+  where
+    unitTest =
+      checkPredicate "run a successful game trace"
+        (walletFundsChange w2 (Ada.toValue Ledger.minAdaTxOut <> Ada.adaValueOf 3 <> guessTokenVal)
+        .&&. valueAtAddress (Scripts.validatorAddress $ G.typedValidator gameParam) (Ada.adaValueOf 5 ==)
+        .&&. walletFundsChange w1 (Ada.toValue (-Ledger.minAdaTxOut) <> Ada.adaValueOf (-8)))
+        successTrace

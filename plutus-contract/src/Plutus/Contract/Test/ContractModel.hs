@@ -103,6 +103,7 @@ module Plutus.Contract.Test.ContractModel
     , checkCoverage
     , coverageIndex
     , quickCheckWithCoverage
+    , quickCheckWithCoverageAndResult
     -- ** Emulator properties
     , propRunActions_
     , propRunActions

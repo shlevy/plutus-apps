@@ -113,6 +113,7 @@ module Plutus.Contract.Test.ContractModel.Internal
     , checkCoverage
     , coverageIndex
     , quickCheckWithCoverage
+    , quickCheckWithCoverageAndResult
     -- ** Emulator properties
     , propRunActions_
     , propRunActions
@@ -1263,25 +1264,28 @@ makeLenses ''CoverageOptions
 -- * not to cover any source locations in the validator scripts.
 defaultCoverageOptions :: CoverageOptions
 defaultCoverageOptions = CoverageOptions { _checkCoverage = False
-                                         , _endpointCoverageReq = \ _ _ -> 20
+                                         , _endpointCoverageReq = \ _ _ -> 0
                                          , _coverageIndex = mempty
                                          , _coverageIORef = Nothing }
 
 -- | Run QuickCheck on a property that tracks coverage and print its coverage report.
 quickCheckWithCoverage :: QC.Testable prop => CoverageOptions -> (CoverageOptions -> prop) -> IO CoverageReport
-quickCheckWithCoverage copts prop = do
+quickCheckWithCoverage opts prop = fst <$> quickCheckWithCoverageAndResult opts prop
+
+quickCheckWithCoverageAndResult :: QC.Testable prop => CoverageOptions -> (CoverageOptions -> prop) -> IO (CoverageReport, Result)
+quickCheckWithCoverageAndResult copts prop = do
   copts <- case copts ^. coverageIORef of
     Nothing -> do
       ref <- newIORef mempty
       return $ copts { _coverageIORef = Just ref }
     _ -> return copts
-  QC.quickCheck $ prop $ copts { _checkCoverage = True }
+  res <- QC.quickCheckResult $ prop $ copts { _checkCoverage = True }
   case copts ^. coverageIORef of
     Nothing -> fail "Unreachable case in quickCheckWithCoverage"
     Just ref -> do
       report <- readIORef ref
       putStrLn . show $ pprCoverageReport (copts ^. coverageIndex) report
-      return report
+      return (report, res)
 
 finalChecks :: ContractModel state
             => CheckOptions
