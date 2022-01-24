@@ -1,26 +1,19 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE RecordWildCards     #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
 
-module Plutus.Contract.Test.Certification where
+module Plutus.Contract.Test.Certification.Run where
 
-import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Lens
 import Data.IntMap qualified as IntMap
 import Data.Maybe
+import Plutus.Contract.Test.Certification
 import Plutus.Contract.Test.ContractModel
 import PlutusTx.Coverage
 import Test.QuickCheck as QC
 import Test.Tasty as Tasty
 import Test.Tasty.Runners as Tasty
-
-data Certification m = Certification {
-    certNoLockedFunds :: Maybe (NoLockedFundsProof m),
-    certUnitTests     :: Maybe TestTree,
-    certCoverageIndex :: CoverageIndex
-  }
 
 data CertificationReport m = CertificationReport {
     standardPropertyResult :: QC.Result,
@@ -60,4 +53,3 @@ certify Certification{..} = do
                                  noLockedFundsResult    = noLock,
                                  unitTestResults        = unitTests,
                                  coverageReport         = cov }
-

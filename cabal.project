@@ -7,6 +7,7 @@ packages: doc
           plutus-chain-index
           plutus-chain-index-core
           plutus-contract
+          plutus-contract-certification
           plutus-ledger
           plutus-ledger-constraints
           plutus-pab
