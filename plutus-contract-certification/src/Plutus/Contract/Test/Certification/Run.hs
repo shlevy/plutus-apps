@@ -19,8 +19,9 @@ data CertificationReport m = CertificationReport {
     standardPropertyResult :: QC.Result,
     noLockedFundsResult    :: Maybe QC.Result,
     unitTestResults        :: [Tasty.Result],
-    coverageReport         :: CoverageReport
-  }
+    coverageReport         :: CoverageReport,
+    coverageIndexReport    :: CoverageIndex
+  } deriving Show
 
 runStandardProperty :: forall m. ContractModel m => Int -> CoverageIndex -> IO (CoverageReport, QC.Result)
 runStandardProperty n covIdx =
@@ -52,4 +53,5 @@ certify Certification{..} = do
   return $ CertificationReport { standardPropertyResult = qcRes,
                                  noLockedFundsResult    = noLock,
                                  unitTestResults        = unitTests,
-                                 coverageReport         = cov }
+                                 coverageReport         = cov,
+                                 coverageIndexReport    = certCoverageIndex }
