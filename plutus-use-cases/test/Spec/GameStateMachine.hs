@@ -416,7 +416,8 @@ certification :: Certification GameModel
 certification = Certification {
     certNoLockedFunds = Just noLockProof,
     certUnitTests     = Just unitTest,
-    certCoverageIndex = covIdx gameParam
+    certCoverageIndex = covIdx gameParam,
+    certCrashTolerance = Just Instance
   }
   where
     unitTest =
