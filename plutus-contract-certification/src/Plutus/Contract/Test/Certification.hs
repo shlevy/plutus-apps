@@ -14,5 +14,6 @@ data Certification m = Certification {
     certCoverageIndex  :: CoverageIndex,
     certNoLockedFunds  :: Maybe (NoLockedFundsProof m),
     certUnitTests      :: Maybe TestTree,
-    certCrashTolerance :: Maybe (Instance CrashTolerance m)
+    certCrashTolerance :: Maybe (Instance CrashTolerance m),
+    certWhitelist      :: Maybe Whitelist
   }

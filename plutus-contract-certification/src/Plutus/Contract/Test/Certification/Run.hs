@@ -18,12 +18,14 @@ import Test.Tasty as Tasty
 import Test.Tasty.Runners as Tasty
 
 data CertificationReport m = CertificationReport {
-    standardPropertyResult       :: QC.Result,
-    noLockedFundsResult          :: Maybe QC.Result,
-    standardCrashToleranceResult :: Maybe QC.Result,
-    unitTestResults              :: [Tasty.Result],
-    coverageReport               :: CoverageReport,
-    coverageIndexReport          :: CoverageIndex
+    certRes_standardPropertyResult       :: QC.Result,
+    certRes_noLockedFundsResult          :: Maybe QC.Result,
+    certRes_standardCrashToleranceResult :: Maybe QC.Result,
+    certRes_unitTestResults              :: [Tasty.Result],
+    certRes_coverageReport               :: CoverageReport,
+    certRes_coverageIndexReport          :: CoverageIndex,
+    certRes_whitelistOk                  :: Maybe Bool,
+    certRes_whitelistResult              :: Maybe QC.Result
   } deriving Show
 
 runStandardProperty :: forall m. ContractModel m => Int -> CoverageIndex -> IO (CoverageReport, QC.Result)
@@ -50,15 +52,29 @@ runUnitTests t = launchTestTree mempty t $ \ status -> do
 
 certify :: forall m. ContractModel m => Certification m -> IO (CertificationReport m)
 certify Certification{..} = do
+  let numTests = 100
+  -- Unit tests
   unitTests    <- fromMaybe [] <$> traverse runUnitTests certUnitTests
-  (cov, qcRes) <- runStandardProperty @m 100 certCoverageIndex
-  noLock       <- traverse (checkNoLockedFunds 100) certNoLockedFunds
+  -- Standard property
+  (cov, qcRes) <- runStandardProperty @m numTests certCoverageIndex
+  -- No locked funds
+  noLock       <- traverse (checkNoLockedFunds numTests) certNoLockedFunds
+  -- TODO: make nicer
+  -- Crash tolerance
   (cov', ctRes) <- case certCrashTolerance of
-    Just Instance -> second Just <$> runStandardProperty @(WithCrashTolerance m) 100 certCoverageIndex
+    Just Instance -> second Just <$> runStandardProperty @(WithCrashTolerance m) numTests certCoverageIndex
     Nothing       -> return (mempty, Nothing)
-  return $ CertificationReport { standardPropertyResult       = qcRes,
-                                 standardCrashToleranceResult = ctRes,
-                                 noLockedFundsResult          = noLock,
-                                 unitTestResults              = unitTests,
-                                 coverageReport               = cov <> cov',
-                                 coverageIndexReport          = certCoverageIndex }
+  -- Whitelist
+  (cov'', wlRes) <- case certWhitelist of
+    Just wl -> second Just <$> (quickCheckWithCoverageAndResult (set coverageIndex certCoverageIndex defaultCoverageOptions) $ \ covopts ->
+                                  withMaxSuccess numTests $ checkErrorWhitelistWithOptions @m defaultCheckOptionsContractModel covopts wl)
+    _       -> return (mempty, Nothing)
+  -- Final results
+  return $ CertificationReport { certRes_standardPropertyResult       = qcRes,
+                                 certRes_standardCrashToleranceResult = ctRes,
+                                 certRes_noLockedFundsResult          = noLock,
+                                 certRes_unitTestResults              = unitTests,
+                                 certRes_coverageReport               = cov <> cov' <> cov'',
+                                 certRes_coverageIndexReport          = certCoverageIndex,
+                                 certRes_whitelistOk                  = whitelistOk <$> certWhitelist,
+                                 certRes_whitelistResult              = wlRes }

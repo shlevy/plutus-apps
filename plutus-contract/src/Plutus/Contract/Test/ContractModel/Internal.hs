@@ -1691,5 +1691,4 @@ checkErrorWhitelistWithOptions opts copts whitelist acts = property $ go check a
     go :: TracePredicate -> Actions m -> Property
     go check actions = monadic (flip State.evalState mempty) $ finalChecks opts copts (\ _ _ -> check) $ do
                         QC.run initiateWallets
-
                         snd <$> runActionsInState StateModel.initialState (toStateModelActions actions)
