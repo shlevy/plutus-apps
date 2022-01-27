@@ -138,6 +138,8 @@ module Plutus.Contract.Test.ContractModel.Internal
     , checkNoLockedFundsProofFast
     , checkNoLockedFundsProofWithWiggleRoom
     , checkNoLockedFundsProofWithWiggleRoomFast
+    , NoLockedFundsProofLight(..)
+    , checkNoLockedFundsProofLight
     -- $checkNoPartiality
     , Whitelist
     , whitelistOk
@@ -1540,6 +1542,8 @@ data NoLockedFundsProof model = NoLockedFundsProof
     -- ^ A strategy for each wallet to recover as much (or more) funds as the main strategy would
     --   give them in a given state, without the assistance of any other wallet.
   }
+data NoLockedFundsProofLight model = NoLockedFundsProofLight
+  { nlfplMainStrategy :: DL model () }
 
 -- | Check a `NoLockedFundsProof`. Each test will generate an arbitrary sequence of actions
 --   (`anyActions_`) and ask the `nlfpMainStrategy` to recover all funds locked by the contract
@@ -1612,6 +1616,19 @@ checkNoLockedFundsProofWithWiggleRoom' wiggle run NoLockedFundsProof{nlfpMainStr
                    ++ show smacts
           in counterexample err (symLeqWiggle wiggle bal bal')
           QC..&&. counterexample err' (run smacts)
+
+checkNoLockedFundsProofLight
+  :: ContractModel model
+  => NoLockedFundsProofLight model
+  -> Property
+checkNoLockedFundsProofLight NoLockedFundsProofLight{nlfplMainStrategy = mainStrat} =
+  forAllDL anyActions_ $ \ (Actions as) ->
+    forAllUniqueDL (nextVarIdx as) (stateAfter $ Actions as) mainStrat $ \ (Actions as') ->
+      counterexample "Main run prop" (run (toStateModelActions $ Actions $ as ++ as'))
+  where
+    nextVarIdx as = 1 + maximum ([0] ++ [ i | Var i <- varOf <$> as ])
+    run = propRunActionsWithOptions' defaultCheckOptionsContractModel
+                                     defaultCoverageOptions (\ _ -> pure True)
 
 -- | A whitelist entry tells you what final log entry prefixes
 -- are acceptable for a given error

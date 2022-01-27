@@ -24,6 +24,7 @@ import Test.Tasty.Runners as Tasty
 data CertificationReport m = CertificationReport {
     certRes_standardPropertyResult       :: QC.Result,
     certRes_noLockedFundsResult          :: Maybe QC.Result,
+    certRes_noLockedFundsLightResult     :: Maybe QC.Result,
     certRes_standardCrashToleranceResult :: Maybe QC.Result,
     certRes_unitTestResults              :: [Tasty.Result],
     certRes_coverageReport               :: CoverageReport,
@@ -41,7 +42,14 @@ runStandardProperty n covIdx =
                                  (const (pure True))
 
 checkNoLockedFunds :: ContractModel m => Int -> NoLockedFundsProof m -> IO QC.Result
-checkNoLockedFunds n prf = quickCheckResult $ withMaxSuccess n $ checkNoLockedFundsProof defaultCheckOptionsContractModel prf
+checkNoLockedFunds n prf = quickCheckResult
+                         $ withMaxSuccess n
+                         $ checkNoLockedFundsProof defaultCheckOptionsContractModel prf
+
+checkNoLockedFundsLight :: ContractModel m => Int -> NoLockedFundsProofLight m -> IO QC.Result
+checkNoLockedFundsLight n prf = quickCheckResult
+                              $ withMaxSuccess n
+                              $ checkNoLockedFundsProofLight prf
 
 runUnitTests :: TestTree -> IO [Tasty.Result]
 runUnitTests t = launchTestTree mempty t $ \ status -> do
@@ -84,6 +92,8 @@ certify Certification{..} = do
   (cov, qcRes) <- runStandardProperty @m numTests certCoverageIndex
   -- No locked funds
   noLock       <- traverse (checkNoLockedFunds numTests) certNoLockedFunds
+  -- No locked funds light
+  noLockLight  <- traverse (checkNoLockedFundsLight numTests) certNoLockedFundsLight
   -- Crash tolerance
   (cov', ctRes) <- checkDerived @WithCrashTolerance certCrashTolerance numTests certCoverageIndex
   -- Whitelist
@@ -92,6 +102,7 @@ certify Certification{..} = do
   return $ CertificationReport { certRes_standardPropertyResult       = qcRes,
                                  certRes_standardCrashToleranceResult = ctRes,
                                  certRes_noLockedFundsResult          = noLock,
+                                 certRes_noLockedFundsLightResult     = noLockLight,
                                  certRes_unitTestResults              = unitTests,
                                  certRes_coverageReport               = cov <> cov' <> cov'',
                                  certRes_coverageIndexReport          = certCoverageIndex,

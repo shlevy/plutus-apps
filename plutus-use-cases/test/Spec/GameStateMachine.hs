@@ -413,12 +413,12 @@ guessTokenVal =
 
 -- | Certification.
 certification :: Certification GameModel
-certification = Certification {
-    certNoLockedFunds  = Just noLockProof,
-    certUnitTests      = Just unitTest,
-    certCoverageIndex  = covIdx gameParam,
-    certCrashTolerance = Just Instance,
-    certWhitelist      = Just defaultWhitelist
+certification = defaultCertification {
+    certNoLockedFunds      = Just noLockProof,
+    certUnitTests          = Just unitTest,
+    certCoverageIndex      = covIdx gameParam,
+    certCrashTolerance     = Just Instance,
+    certWhitelist          = Just defaultWhitelist
   }
   where
     unitTest =

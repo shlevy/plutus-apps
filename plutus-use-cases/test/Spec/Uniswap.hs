@@ -17,6 +17,7 @@ import Control.Monad
 import Plutus.Contract
 import Plutus.Contract as Contract hiding (throwError)
 import Plutus.Contract.Test hiding (not)
+import Plutus.Contract.Test.Certification
 import Plutus.Contract.Test.ContractModel
 import Plutus.Contract.Test.ContractModel.Symbolics
 import Plutus.Contracts.Currency qualified as Currency
@@ -489,6 +490,10 @@ noLockProof = NoLockedFundsProof{
                 then action $ ClosePool w t1 t2
                 else action $ RemoveLiquidity w t1 t2 (unAmount . sum $ Map.lookup w liqs)
 
+noLockProofLight :: NoLockedFundsProofLight UniswapModel
+noLockProofLight = NoLockedFundsProofLight{nlfplMainStrategy = nlfpMainStrategy noLockProof}
+
+
 -- This doesn't hold
 prop_CheckNoLockedFundsProof :: Property
 prop_CheckNoLockedFundsProof = checkNoLockedFundsProof defaultCheckOptionsContractModel noLockProof
@@ -525,3 +530,10 @@ tests = testGroup "uniswap" [
         Uniswap.uniswapTrace
     , testProperty "prop_Uniswap" $ withMaxSuccess 20 prop_Uniswap
     ]
+
+-- | Certification.
+certification :: Certification UniswapModel
+certification = defaultCertification {
+    certNoLockedFundsLight = Just noLockProofLight,
+    certCoverageIndex      = covIdx
+  }
