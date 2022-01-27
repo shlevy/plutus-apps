@@ -1,6 +1,10 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE RecordWildCards     #-}
-{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE AllowAmbiguousTypes   #-}
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Plutus.Contract.Test.Certification.Run where
 
@@ -50,6 +54,27 @@ runUnitTests t = launchTestTree mempty t $ \ status -> do
         Done r -> return r
         _      -> retry
 
+checkDerived :: forall d m c. (c m => ContractModel (d m))
+             => Maybe (Instance c m)
+             -> Int
+             -> CoverageIndex
+             -> IO (CoverageReport, Maybe QC.Result)
+checkDerived Nothing _ _                     = return (mempty, Nothing)
+checkDerived (Just Instance) numTests covIdx = second Just <$> runStandardProperty @(d m) numTests covIdx
+
+checkWhitelist :: forall m. ContractModel m
+               => Maybe Whitelist
+               -> Int
+               -> CoverageIndex
+               -> IO (CoverageReport, Maybe QC.Result)
+checkWhitelist Nothing _ _ = return (mempty, Nothing)
+checkWhitelist (Just wl) numTest covIdx = do
+  (cov, res) <- quickCheckWithCoverageAndResult (set coverageIndex covIdx defaultCoverageOptions) $
+                  \ covopts -> withMaxSuccess numTest $ checkErrorWhitelistWithOptions @m
+                                                            defaultCheckOptionsContractModel
+                                                            covopts wl
+  return (cov, Just res)
+
 certify :: forall m. ContractModel m => Certification m -> IO (CertificationReport m)
 certify Certification{..} = do
   let numTests = 100
@@ -59,16 +84,10 @@ certify Certification{..} = do
   (cov, qcRes) <- runStandardProperty @m numTests certCoverageIndex
   -- No locked funds
   noLock       <- traverse (checkNoLockedFunds numTests) certNoLockedFunds
-  -- TODO: make nicer
   -- Crash tolerance
-  (cov', ctRes) <- case certCrashTolerance of
-    Just Instance -> second Just <$> runStandardProperty @(WithCrashTolerance m) numTests certCoverageIndex
-    Nothing       -> return (mempty, Nothing)
+  (cov', ctRes) <- checkDerived @WithCrashTolerance certCrashTolerance numTests certCoverageIndex
   -- Whitelist
-  (cov'', wlRes) <- case certWhitelist of
-    Just wl -> second Just <$> (quickCheckWithCoverageAndResult (set coverageIndex certCoverageIndex defaultCoverageOptions) $ \ covopts ->
-                                  withMaxSuccess numTests $ checkErrorWhitelistWithOptions @m defaultCheckOptionsContractModel covopts wl)
-    _       -> return (mempty, Nothing)
+  (cov'', wlRes) <- checkWhitelist @m certWhitelist numTests certCoverageIndex
   -- Final results
   return $ CertificationReport { certRes_standardPropertyResult       = qcRes,
                                  certRes_standardCrashToleranceResult = ctRes,
