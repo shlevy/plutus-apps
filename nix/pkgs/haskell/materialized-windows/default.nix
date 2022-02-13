@@ -743,6 +743,7 @@
         cardano-wallet-launcher = ./.plan.nix/cardano-wallet-launcher.nix;
         cardano-protocol-tpraos = ./.plan.nix/cardano-protocol-tpraos.nix;
         cardano-crypto-class = ./.plan.nix/cardano-crypto-class.nix;
+        plutus-contract-certification = ./.plan.nix/plutus-contract-certification.nix;
         cardano-wallet = ./.plan.nix/cardano-wallet.nix;
         tracer-transformers = ./.plan.nix/tracer-transformers.nix;
         plutus-tx-plugin = ./.plan.nix/plutus-tx-plugin.nix;
@@ -862,6 +863,7 @@
           "cardano-crypto-class" = {
             flags = { "development" = lib.mkOverride 900 false; };
             };
+          "plutus-contract-certification" = { flags = {}; };
           "cardano-wallet" = {
             flags = { "release" = lib.mkOverride 900 false; };
             };
@@ -1611,6 +1613,7 @@
           "fmlist".components.library.planned = lib.mkOverride 900 true;
           "memory".components.library.planned = lib.mkOverride 900 true;
           "cardano-protocol-tpraos".components.library.planned = lib.mkOverride 900 true;
+          "plutus-contract-certification".components.library.planned = lib.mkOverride 900 true;
           "random-shuffle".components.library.planned = lib.mkOverride 900 true;
           "pretty-show".components.exes."ppsh".planned = lib.mkOverride 900 true;
           "typerep-map".components.sublibs."typerep-extra-impls".planned = lib.mkOverride 900 true;
