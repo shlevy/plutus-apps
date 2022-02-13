@@ -20,7 +20,7 @@ import Spec.SealedBidAuction qualified
 import Spec.SimpleEscrow qualified
 -- import Spec.Stablecoin qualified
 import Spec.TokenAccount qualified
-import Spec.Uniswap qualified
+import Plutus.Contracts.Uniswap.Spec qualified as Spec.Uniswap
 import Spec.Vesting qualified
 
 import Test.Tasty

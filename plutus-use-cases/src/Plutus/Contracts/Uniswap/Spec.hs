@@ -11,7 +11,7 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing -fno-warn-redundant-constraints #-}
-module Spec.Uniswap where
+module Plutus.Contracts.Uniswap.Spec where
 
 import Control.Arrow
 import Control.Exception hiding (assert)
@@ -56,7 +56,7 @@ import Test.Tasty.QuickCheck (testProperty)
 
 import Ledger.Constraints
 
-import Spec.Uniswap.Endpoints
+import Plutus.Contracts.Uniswap.Endpoints
 
 data PoolIndex = PoolIndex SymToken SymToken deriving (Show, Data)
 

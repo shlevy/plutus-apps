@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module Spec.Uniswap.Endpoints where
+module Plutus.Contracts.Uniswap.Endpoints where
 
 import Control.Monad hiding (fmap)
 import Data.Map qualified as Map

@@ -57,13 +57,14 @@ library
     Plutus.Contracts.Tutorial.Escrow
     Plutus.Contracts.Tutorial.EscrowStrict
     Plutus.Contracts.Uniswap
+    Plutus.Contracts.Uniswap.Endpoints
     Plutus.Contracts.Uniswap.OffChain
     Plutus.Contracts.Uniswap.OnChain
     Plutus.Contracts.Uniswap.Pool
+    Plutus.Contracts.Uniswap.Spec
     Plutus.Contracts.Uniswap.Trace
     Plutus.Contracts.Uniswap.Types
     Plutus.Contracts.Vesting
-
   hs-source-dirs:     src
   default-language:   Haskell2010
   default-extensions:
@@ -98,6 +99,7 @@ library
     , plutus-ledger              >=1.0.0
     , plutus-ledger-constraints  >=1.0.0
     , plutus-script-utils        >=1.0.0
+    , plutus-contract-certification
 
   --------------------------
   -- Other IOG dependencies
@@ -124,6 +126,9 @@ library
     , semigroups
     , serialise
     , streaming
+    , tasty -any
+    , tasty-quickcheck -any
+    , QuickCheck -any
     , template-haskell
     , text
 
@@ -162,8 +167,6 @@ test-suite plutus-use-cases-test
     Spec.Tutorial.Escrow4
     Spec.Tutorial.Escrow5
     Spec.Tutorial.Escrow6
-    Spec.Uniswap
-    Spec.Uniswap.Endpoints
     Spec.Vesting
 
   default-language:   Haskell2010

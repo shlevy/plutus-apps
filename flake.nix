@@ -94,7 +94,10 @@
       {
         packages = topLevel.bitte-packages;
         legacyPackages = topLevel;
-      }));
+        iog.dapp = topLevel.plutus-apps.haskell.project;
+      })) // {
+      iog.dapp = self.legacyPackages.x86_64-linux.plutus-apps.haskell.project;
+    };
 
   nixConfig = {
     extra-substituters = [
