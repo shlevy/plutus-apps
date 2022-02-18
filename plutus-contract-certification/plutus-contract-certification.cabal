@@ -43,5 +43,5 @@ library
         plutus-tx -any,
         QuickCheck -any,
         stm -any,
-        tasty -any
-
+        tasty -any,
+        aeson -any
