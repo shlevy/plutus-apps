@@ -3,10 +3,27 @@
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
-module Plutus.Contract.Test.Certification.Run where
+module Plutus.Contract.Test.Certification.Run
+  ( -- * A certification report holds all the necessary information
+    -- to make sense of certification results
+    CertificationReport
+  -- * There are a tonne of lenses
+  , certRes_standardPropertyResult
+  , certRes_noLockedFundsResult
+  , certRes_noLockedFundsLightResult
+  , certRes_standardCrashToleranceResult
+  , certRes_unitTestResults
+  , certRes_coverageReport
+  , certRes_coverageIndexReport
+  , certRes_whitelistOk
+  , certRes_whitelistResult
+  -- * and we have a function for running certification
+  , certify
+  ) where
 
 import Control.Arrow
 import Control.Concurrent.STM
@@ -22,16 +39,18 @@ import Test.Tasty as Tasty
 import Test.Tasty.Runners as Tasty
 
 data CertificationReport m = CertificationReport {
-    certRes_standardPropertyResult       :: QC.Result,
-    certRes_noLockedFundsResult          :: Maybe QC.Result,
-    certRes_noLockedFundsLightResult     :: Maybe QC.Result,
-    certRes_standardCrashToleranceResult :: Maybe QC.Result,
-    certRes_unitTestResults              :: [Tasty.Result],
-    certRes_coverageReport               :: CoverageReport,
-    certRes_coverageIndexReport          :: CoverageIndex,
-    certRes_whitelistOk                  :: Maybe Bool,
-    certRes_whitelistResult              :: Maybe QC.Result
+    _certRes_standardPropertyResult       :: QC.Result,
+    _certRes_noLockedFundsResult          :: Maybe QC.Result,
+    _certRes_noLockedFundsLightResult     :: Maybe QC.Result,
+    _certRes_standardCrashToleranceResult :: Maybe QC.Result,
+    _certRes_unitTestResults              :: [Tasty.Result],
+    _certRes_coverageReport               :: CoverageReport,
+    _certRes_coverageIndexReport          :: CoverageIndex,
+    _certRes_whitelistOk                  :: Maybe Bool,
+    _certRes_whitelistResult              :: Maybe QC.Result
   } deriving Show
+
+makeLenses ''CertificationReport
 
 runStandardProperty :: forall m. ContractModel m => Int -> CoverageIndex -> IO (CoverageReport, QC.Result)
 runStandardProperty n covIdx =
@@ -99,12 +118,12 @@ certify Certification{..} = do
   -- Whitelist
   (cov'', wlRes) <- checkWhitelist @m certWhitelist numTests certCoverageIndex
   -- Final results
-  return $ CertificationReport { certRes_standardPropertyResult       = qcRes,
-                                 certRes_standardCrashToleranceResult = ctRes,
-                                 certRes_noLockedFundsResult          = noLock,
-                                 certRes_noLockedFundsLightResult     = noLockLight,
-                                 certRes_unitTestResults              = unitTests,
-                                 certRes_coverageReport               = cov <> cov' <> cov'',
-                                 certRes_coverageIndexReport          = certCoverageIndex,
-                                 certRes_whitelistOk                  = whitelistOk <$> certWhitelist,
-                                 certRes_whitelistResult              = wlRes }
+  return $ CertificationReport { _certRes_standardPropertyResult       = qcRes,
+                                 _certRes_standardCrashToleranceResult = ctRes,
+                                 _certRes_noLockedFundsResult          = noLock,
+                                 _certRes_noLockedFundsLightResult     = noLockLight,
+                                 _certRes_unitTestResults              = unitTests,
+                                 _certRes_coverageReport               = cov <> cov' <> cov'',
+                                 _certRes_coverageIndexReport          = certCoverageIndex,
+                                 _certRes_whitelistOk                  = whitelistOk <$> certWhitelist,
+                                 _certRes_whitelistResult              = wlRes }
