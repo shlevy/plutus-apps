@@ -45,4 +45,5 @@ library
         stm -any,
         tasty -any,
         aeson -any,
-        splitmix -any
+        splitmix -any,
+        bytestring -any

@@ -27,13 +27,16 @@ module Plutus.Contract.Test.Certification.Run
   , certRes_whitelistResult
   -- * and we have a function for running certification
   , certify
+  -- * Do you need documentation for this?!
+  , certResJSON
   ) where
 
 import Control.Arrow
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Lens
-import Data.Aeson (FromJSON (..), ToJSON (..))
+import Data.Aeson (FromJSON (..), ToJSON (..), encode)
+import Data.ByteString.Lazy.Char8
 import Data.IntMap qualified as IntMap
 import Data.Maybe
 import GHC.Generics
@@ -90,6 +93,9 @@ data CertificationReport m = CertificationReport {
     _certRes_whitelistResult              :: Maybe QC.Result
   } deriving (Show, Generic, ToJSON)
 makeLenses ''CertificationReport
+
+certResJSON :: CertificationReport m -> String
+certResJSON = unpack . encode
 
 runStandardProperty :: forall m. ContractModel m => Int -> CoverageIndex -> IO (CoverageReport, QC.Result)
 runStandardProperty n covIdx =
