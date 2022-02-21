@@ -44,4 +44,5 @@ library
         QuickCheck -any,
         stm -any,
         tasty -any,
-        aeson -any
+        aeson -any,
+        splitmix -any

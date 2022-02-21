@@ -2,12 +2,14 @@
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DerivingStrategies    #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Plutus.Contract.Test.Certification.Run
   ( -- * A certification report holds all the necessary information
@@ -29,16 +31,52 @@ module Plutus.Contract.Test.Certification.Run
 
 import Control.Arrow
 import Control.Concurrent.STM
+import Control.Exception
 import Control.Lens
+import Data.Aeson (FromJSON (..), ToJSON (..))
 import Data.IntMap qualified as IntMap
 import Data.Maybe
+import GHC.Generics
 import Plutus.Contract.Test.Certification
 import Plutus.Contract.Test.ContractModel
 import Plutus.Contract.Test.ContractModel.CrashTolerance
 import PlutusTx.Coverage
+import System.Random.SplitMix
 import Test.QuickCheck as QC
+import Test.QuickCheck.Random as QC
 import Test.Tasty as Tasty
 import Test.Tasty.Runners as Tasty
+import Text.Read
+
+newtype JSONShowRead a = JSONShowRead a
+
+instance Show a => ToJSON (JSONShowRead a) where
+  toJSON (JSONShowRead a) = toJSON (show a)
+
+instance Read a => FromJSON (JSONShowRead a) where
+  parseJSON v = do
+    str <- parseJSON v
+    case readMaybe str of
+      Nothing -> fail "JSONShowRead: readMaybe Nothing"
+      Just a  -> return $ JSONShowRead a
+
+deriving via (JSONShowRead SMGen) instance FromJSON SMGen
+deriving via (JSONShowRead SMGen) instance ToJSON SMGen
+
+deriving via SMGen instance FromJSON QCGen
+deriving via SMGen instance ToJSON QCGen
+deriving instance Generic QC.Result
+deriving instance ToJSON QC.Result
+deriving instance FromJSON QC.Result
+
+instance ToJSON SomeException where
+  toJSON (SomeException e) = toJSON (show e)
+instance FromJSON SomeException where
+  parseJSON v = do
+    str <- parseJSON v
+    return $ SomeException (ErrorCall str)
+
+deriving via (JSONShowRead Tasty.Result) instance ToJSON Tasty.Result
 
 data CertificationReport m = CertificationReport {
     _certRes_standardPropertyResult       :: QC.Result,
@@ -50,8 +88,7 @@ data CertificationReport m = CertificationReport {
     _certRes_coverageIndexReport          :: CoverageIndex,
     _certRes_whitelistOk                  :: Maybe Bool,
     _certRes_whitelistResult              :: Maybe QC.Result
-  } deriving Show
-
+  } deriving (Show, Generic, ToJSON)
 makeLenses ''CertificationReport
 
 runStandardProperty :: forall m. ContractModel m => Int -> CoverageIndex -> IO (CoverageReport, QC.Result)
