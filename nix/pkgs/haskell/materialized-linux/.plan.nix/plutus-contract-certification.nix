@@ -44,6 +44,9 @@
           (hsPkgs."QuickCheck" or (errorHandler.buildDepError "QuickCheck"))
           (hsPkgs."stm" or (errorHandler.buildDepError "stm"))
           (hsPkgs."tasty" or (errorHandler.buildDepError "tasty"))
+          (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+          (hsPkgs."splitmix" or (errorHandler.buildDepError "splitmix"))
+          (hsPkgs."bytestring" or (errorHandler.buildDepError "bytestring"))
           ];
         buildable = true;
         modules = [
