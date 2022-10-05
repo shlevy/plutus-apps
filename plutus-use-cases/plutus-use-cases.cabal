@@ -54,8 +54,10 @@ library
     Plutus.Contracts.Stablecoin
     Plutus.Contracts.Swap
     Plutus.Contracts.TokenAccount
+    Plutus.Contracts.Tutorial.Endpoints
     Plutus.Contracts.Tutorial.Escrow
     Plutus.Contracts.Tutorial.EscrowStrict
+    Plutus.Contracts.Tutorial.Spec
     Plutus.Contracts.Uniswap
     Plutus.Contracts.Uniswap.OffChain
     Plutus.Contracts.Uniswap.OnChain
@@ -91,13 +93,16 @@ library
   -- Local components
   --------------------
   build-depends:
-      playground-common
+      data-default
+    , playground-common
     , plutus-chain-index-core
     , plutus-contract
+    , plutus-contract-certification
     , plutus-core
     , plutus-ledger
     , plutus-ledger-constraints
     , plutus-script-utils
+    , QuickCheck
 
   --------------------------
   -- Other IOG dependencies
@@ -139,8 +144,6 @@ test-suite plutus-use-cases-test
     Spec.Crowdfunding
     Spec.Currency
     Spec.ErrorHandling
-    Spec.Escrow
-    Spec.Escrow.Endpoints
     Spec.Future
     Spec.Game
     Spec.GameStateMachine
@@ -234,8 +237,6 @@ executable plutus-use-cases-scripts
     Spec.Crowdfunding
     Spec.Currency
     Spec.ErrorHandling
-    Spec.Escrow
-    Spec.Escrow.Endpoints
     Spec.Future
     Spec.Game
     Spec.GameStateMachine
