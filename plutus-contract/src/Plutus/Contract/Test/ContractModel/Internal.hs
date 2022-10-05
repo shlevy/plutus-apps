@@ -993,7 +993,7 @@ toStateModelActions :: ContractModel state =>
                         Actions state -> StateModel.Actions (ModelState state)
 toStateModelActions (Actions_ rs (Smart k s)) =
   StateModel.Actions_ rs (Smart k $ map mkStep s)
-    where mkStep (ActWaitUntil v n) = v := WaitUntil n
+    where mkStep (ActWaitUntil v n) = v := (WaitUntil $ n + 1)
           mkStep act                = varOf act := ContractAction (isBind act) (actionOf act)
 
 fromStateModelActions :: StateModel.Actions (ModelState s) -> Actions s
@@ -1513,7 +1513,7 @@ propRunActions_ actions =
 -- to write `ContractModel`s that keep track of balances.
 defaultCheckOptionsContractModel :: CheckOptions
 defaultCheckOptionsContractModel =
-  defaultCheckOptions & emulatorConfig . initialChainState .~ (Left . Map.fromList $ zip knownWallets (repeat (Ada.lovelaceValueOf 100_000_000_000_000_000)))
+  defaultCheckOptions & increaseTransactionLimits & emulatorConfig . initialChainState .~ (Left . Map.fromList $ zip knownWallets (repeat (Ada.lovelaceValueOf 100_000_000_000_000_000)))
 
 -- | Run a `Actions` in the emulator and check that the model and the emulator agree on the final
 --   wallet balance changes, and that the given `TracePredicate` holds at the end. Equivalent to:
