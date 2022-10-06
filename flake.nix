@@ -84,7 +84,7 @@
   };
 
   outputs = { self, flake-utils, ... }@inputs:
-    (flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
+    flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         topLevel = import ./. {
           inherit system;
@@ -95,9 +95,7 @@
         packages = topLevel.bitte-packages;
         legacyPackages = topLevel;
         iog.dapp = topLevel.plutus-apps.haskell.project;
-      })) // {
-      iog.dapp = self.legacyPackages.x86_64-linux.plutus-apps.haskell.project;
-    };
+      });
 
   nixConfig = {
     extra-substituters = [
